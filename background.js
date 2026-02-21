@@ -29,6 +29,7 @@ var VALORANT_GAME_ID = 21640;
 // Removed kill/death features completely (focus-only)
 var REQUIRED_FEATURES = ["match_info", "me", "game_info"];
 var STATUS_POLL_MS = 2000;
+var ROUND_TOAST_DELAY_AFTER_RESULT_MS = 2500;
 
 var TUNING = {
   gentle: { toastMs: 9000, globalCooldownMs: 0, perMessageCooldownMs: 600000 },
@@ -313,6 +314,7 @@ var lastScoreLost = 0;                     // Last known lost count
 var currentStreak = 0;                     // Positive = win streak, negative = loss streak
 var peakLead = 0;                          // Largest lead we've had this match
 var peakDeficit = 0;                       // Largest deficit we've faced this match
+var lastRoundResultAt = 0;                 // Timestamp when score changed (round ended)
 
 // Per-category cooldown tracker (prevents same category back-to-back)
 var categoryLastShown = {};
@@ -653,6 +655,7 @@ function resetMatchState(reason) {
   localTeamId = null;
   localPlayerAgent = null;
   stopAgentPoll();
+  lastRoundResultAt = 0;
 
   diagDebug("Reset match state: " + reason);
 }
@@ -674,6 +677,7 @@ function resetForNewMatch(reason) {
   localTeamId = null;
   localPlayerAgent = null;
   stopAgentPoll();
+  lastRoundResultAt = 0;
 
   halftimeShownForMatch = false;
   overtimeAnnouncedRound = null;
@@ -935,10 +939,12 @@ function handleMatchInfoUpdate(mi) {
         // Detect round result
         if (newWon > lastScoreWon) {
           // We won the last round
+          lastRoundResultAt = nowMs();
           currentStreak = (currentStreak >= 0) ? currentStreak + 1 : 1;
           if (settings.devMode) diagDebug("🎉 Round WON | Streak: " + currentStreak);
         } else if (newLost > lastScoreLost) {
           // We lost the last round
+          lastRoundResultAt = nowMs();
           currentStreak = (currentStreak <= 0) ? currentStreak - 1 : -1;
           if (settings.devMode) diagDebug("💀 Round LOST | Streak: " + currentStreak);
 
@@ -1061,6 +1067,11 @@ function handleMatchInfoUpdate(mi) {
 
   // Show exactly ONE toast per round (buy phase gate)
   if (effectiveRound !== null && isBuy) {
+    // Avoid firing immediately after a round result update (can happen during
+    // transitional phases before the new round is truly underway).
+    if (lastRoundResultAt > 0 && (nowMs() - lastRoundResultAt) < ROUND_TOAST_DELAY_AFTER_RESULT_MS) {
+      return;
+    }
     // Round 1 is always silent (no toast).
     if (effectiveRound === 1) {
       if (lastToastRoundNumber !== 1) {
