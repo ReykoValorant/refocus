@@ -651,6 +651,8 @@ function resetMatchState(reason) {
   meTeam = null;
   matchTeamSide = null;
   localTeamId = null;
+  localPlayerAgent = null;
+  stopAgentPoll();
 
   diagDebug("Reset match state: " + reason);
 }
@@ -1016,12 +1018,10 @@ function handleMatchInfoUpdate(mi) {
     }
 
     // Agent fallback from roster character field (backup if me.agent hasn't fired yet)
-    if (!localPlayerAgent) {
-      var agentFromRoster = getLocalAgentFromRoster(mi.roster);
-      if (agentFromRoster) {
-        localPlayerAgent = agentFromRoster;
-        diagDebug("Agent detected from roster: " + localPlayerAgent);
-      }
+    var agentFromRoster = getLocalAgentFromRoster(mi.roster);
+    if (agentFromRoster && agentFromRoster !== localPlayerAgent) {
+      localPlayerAgent = agentFromRoster;
+      diagDebug("Agent updated from roster: " + localPlayerAgent);
     }
 
     if (!matchTeamSide && effectiveRound !== null) {
@@ -1366,11 +1366,11 @@ function handleMeInference(meObj) {
   if (team) meTeam = team;
 
   // Agent detection from me.agent (internal ID like "Wushu_PC_C")
-  if (meObj.agent && typeof meObj.agent === "string" && !localPlayerAgent) {
+  if (meObj.agent && typeof meObj.agent === "string") {
     var resolved = resolveAgentFromInternalId(meObj.agent);
-    if (resolved) {
+    if (resolved && resolved !== localPlayerAgent) {
       localPlayerAgent = resolved;
-      diagDebug("Agent detected from me.agent: " + localPlayerAgent + " (" + meObj.agent + ")");
+      diagDebug("Agent updated from me.agent: " + localPlayerAgent + " (" + meObj.agent + ")");
     }
   }
 }
