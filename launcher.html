@@ -601,12 +601,12 @@
 
       </div>
 
-      <!-- RIGHT: Rate Messages -->
+      <!-- RIGHT: AI Message Ranker -->
       <div class="col-right">
         <div class="rate-panel" id="ratePanel">
           <div class="panel-head">
             <div class="pip"></div>
-            <div class="panel-label">Rate Messages</div>
+            <div class="panel-label">AI Message Ranker</div>
           </div>
           <div id="rateEmpty" class="rate-empty">
             <div class="rate-empty-icon">&#128203;</div>
@@ -614,7 +614,7 @@
           </div>
           <div class="rate-list" id="rateList" style="display:none;"></div>
           <div class="rate-footer" id="rateFooter" style="display:none;">
-            <button class="submit-btn" id="btnSubmit">Apply to Refocus AI</button>
+            <button class="submit-btn" id="btnSubmit">Train My Personal Feed</button>
             <div class="rate-status" id="rateStatus"></div>
           </div>
         </div>
@@ -711,7 +711,7 @@
   });
   btnPreview.addEventListener("click", () => { sendToBackground("preview_toast", {}); });
 
-  // -------- Rate Messages --------
+  // -------- AI Message Ranker --------
   let rateItems = [];
 
   function loadRatingsLocal() {
@@ -823,7 +823,7 @@
     // Ratings already saved instantly on click — just clear history and confirm
     try { localStorage.removeItem(UNRATED_KEY); } catch(e) {}
     rateItems = [];
-    showRateStatus("Done! Refocus will now prefer messages you liked. \u2705", true);
+    showRateStatus("Personalization updated — Refocus will prioritize tips you usually find helpful. \u2705", true);
     setTimeout(() => {
       rateList.innerHTML = "";
       rateList.style.display   = "none";

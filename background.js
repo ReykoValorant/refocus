@@ -23,6 +23,7 @@ var INGAME_WINDOW = "in_game";
 var SETTINGS_KEY  = "refocus_settings_v2";
 var UNRATED_KEY   = "unrated_messages";
 var RATINGS_KEY   = "refocus_ratings";
+var PROFILE_KEY   = "refocus_profile_v1";
 var VALORANT_GAME_ID = 21640;
 
 // Removed kill/death features completely (focus-only)
@@ -416,7 +417,50 @@ function tuning() {
   return TUNING[key] || TUNING.normal;
 }
 
-function pickRandomMessage(list, perMessageCooldownMs) {
+function getEmptyProfile() {
+  return {
+    totals: { up: 0, down: 0 },
+    categories: {},
+    sides: {},
+    agents: {}
+  };
+}
+
+function loadProfile() {
+  try {
+    var raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return getEmptyProfile();
+    var p = safeJsonParse(raw);
+    if (!p || typeof p !== "object") return getEmptyProfile();
+    p.totals = p.totals || { up: 0, down: 0 };
+    p.categories = p.categories || {};
+    p.sides = p.sides || {};
+    p.agents = p.agents || {};
+    return p;
+  } catch (e) {
+    return getEmptyProfile();
+  }
+}
+
+function saveProfile(profile) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) {}
+}
+
+function applyVoteBucket(bucket, key, vote) {
+  if (!key) return;
+  if (!bucket[key]) bucket[key] = { up: 0, down: 0 };
+  if (vote === 1) bucket[key].up += 1;
+  if (vote === -1) bucket[key].down += 1;
+}
+
+function profileAffinity(bucket, key) {
+  if (!bucket || !key) return 0;
+  var b = bucket[key];
+  if (!b) return 0;
+  return (b.up || 0) - (b.down || 0);
+}
+
+function pickRandomMessage(list, perMessageCooldownMs, context) {
   var now = nowMs();
   var allowed = [];
   for (var i = 0; i < list.length; i++) {
@@ -427,12 +471,22 @@ function pickRandomMessage(list, perMessageCooldownMs) {
 
   // Weighted selection by local rating score (up - down)
   var ratings = loadRatings();
+  var profile = loadProfile();
   var weighted = [];
   for (var j = 0; j < pool.length; j++) {
     var msg   = pool[j];
     var entry = ratings[msg];
     var score = entry ? (entry.up - entry.down) : 0;
-    var w = score <= -2 ? 0 : score === 0 ? 1 : score === 1 ? 2 : 3;
+
+    var categoryBoost = context ? profileAffinity(profile.categories, context.category) : 0;
+    var sideBoost = context ? profileAffinity(profile.sides, context.side) : 0;
+    var agentBoost = context ? profileAffinity(profile.agents, context.agent) : 0;
+    var blendedScore = score + (categoryBoost * 0.5) + (sideBoost * 0.35) + (agentBoost * 0.2);
+
+    var w = blendedScore <= -2 ? 0 : blendedScore <= 0 ? 1 : blendedScore <= 1.5 ? 2 : 3;
+
+    // Keep exploration alive so users can discover better tips over time.
+    if (w === 0 && Math.random() < 0.12) w = 1;
     for (var k = 0; k < w; k++) weighted.push(msg);
   }
   // Fallback: all messages disliked — use unweighted cooldown pool
@@ -445,13 +499,17 @@ function pickRandomMessage(list, perMessageCooldownMs) {
 // Pick from a category with both a category-level cooldown AND per-message cooldown.
 // categoryKey: string label for the category (e.g. "atk", "def", "ult_awareness")
 // categoryCooldownMs: how long before this whole category can fire again (0 = no limit)
-function pickFromCategory(list, categoryKey, categoryCooldownMs, perMessageCooldownMs) {
+function pickFromCategory(list, categoryKey, categoryCooldownMs, perMessageCooldownMs, sideKey) {
   if (categoryCooldownMs > 0) {
     var now = nowMs();
     var catLast = categoryLastShown[categoryKey] || 0;
     if ((now - catLast) < categoryCooldownMs) return null; // category on cooldown
   }
-  return pickRandomMessage(list, perMessageCooldownMs);
+  return pickRandomMessage(list, perMessageCooldownMs, {
+    category: categoryKey,
+    side: sideKey || null,
+    agent: localPlayerAgent || null
+  });
 }
 
 function markCategoryShown(categoryKey) {
@@ -493,6 +551,26 @@ function saveRatingLocal(messageText, vote) {
     if (vote === 1)  ratings[messageText].up   += 1;
     if (vote === -1) ratings[messageText].down += 1;
     localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+
+    var profile = loadProfile();
+    if (vote === 1) profile.totals.up += 1;
+    if (vote === -1) profile.totals.down += 1;
+
+    var ctx = null;
+    for (var i = sessionMessages.length - 1; i >= 0; i--) {
+      if (sessionMessages[i].messageText === messageText) { ctx = sessionMessages[i]; break; }
+    }
+    if (!ctx) {
+      var unrated = safeJsonParse(localStorage.getItem(UNRATED_KEY) || "[]") || [];
+      for (var j = unrated.length - 1; j >= 0; j--) {
+        if (unrated[j].messageText === messageText) { ctx = unrated[j]; break; }
+      }
+    }
+
+    applyVoteBucket(profile.categories, ctx && ctx.messageCategory, vote);
+    applyVoteBucket(profile.sides, ctx && ctx.userSide, vote);
+    applyVoteBucket(profile.agents, localPlayerAgent || null, vote);
+    saveProfile(profile);
   } catch (e) {}
 }
 
@@ -1176,7 +1254,7 @@ function chooseRoundToast(roundNumber) {
     var otPair = Math.floor((r - 25) / 2);
     if (overtimeAnnouncedRound !== otPair) {
       overtimeAnnouncedRound = otPair;
-      var otMsg = pickRandomMessage(TOASTS_OVERTIME, cd);
+      var otMsg = pickRandomMessage(TOASTS_OVERTIME, cd, { category: "overtime", side: getSideForRound(r), agent: localPlayerAgent || null });
       markCategoryShown("overtime");
       return { msg: otMsg, category: "overtime" };
     }
@@ -1184,14 +1262,14 @@ function chooseRoundToast(roundNumber) {
 
   // MATCH POINT (round 24)
   if (r === 24) {
-    var mpMsg = pickFromCategory(TOASTS_MATCH_POINT, "match_point", CAT_CD, cd);
+    var mpMsg = pickFromCategory(TOASTS_MATCH_POINT, "match_point", CAT_CD, cd, getSideForRound(r));
     if (mpMsg) { markCategoryShown("match_point"); return { msg: mpMsg, category: "match_point" }; }
   }
 
   // ULT AWARENESS (rounds 4+, 15% chance, category cooldown prevents back-to-back)
   if (r >= 4) {
     if (Math.random() < 0.15) {
-      var awaMsg = pickFromCategory(TOASTS_ULT_AWARENESS, "ult_awareness", CAT_CD, cd);
+      var awaMsg = pickFromCategory(TOASTS_ULT_AWARENESS, "ult_awareness", CAT_CD, cd, getSideForRound(r));
       if (awaMsg) { markCategoryShown("ult_awareness"); return { msg: awaMsg, category: "ult_awareness" }; }
     }
   }
@@ -1199,7 +1277,7 @@ function chooseRoundToast(roundNumber) {
   // BONUS ROUND (round 3 or 15, won pistol R1 + eco R2 = now on bonus)
   var isBonusRound = (r === 3 || r === 15) && currentStreak >= 2;
   if (isBonusRound) {
-    var bonusMsg = pickFromCategory(TOASTS_BONUS_ROUND, "bonus_round", CAT_CD, cd);
+    var bonusMsg = pickFromCategory(TOASTS_BONUS_ROUND, "bonus_round", CAT_CD, cd, getSideForRound(r));
     if (bonusMsg) { markCategoryShown("bonus_round"); return { msg: bonusMsg, category: "bonus_round" }; }
   }
 
@@ -1209,26 +1287,26 @@ function chooseRoundToast(roundNumber) {
 
   // CLOSE GAME (11-11 or 12-12)
   if ((myScore.won === 11 && myScore.lost === 11) || (myScore.won === 12 && myScore.lost === 12)) {
-    var closeMsg = pickFromCategory(TOASTS_CLOSE_GAME, "close_game", CAT_CD, cd);
+    var closeMsg = pickFromCategory(TOASTS_CLOSE_GAME, "close_game", CAT_CD, cd, getSideForRound(r));
     if (closeMsg) { markCategoryShown("close_game"); return { msg: closeMsg, category: "close_game" }; }
   }
 
   // GETTING COMEBACK'D ON (had big lead, now losing it)
   if (peakLead >= 5 && roundDiff <= 2 && currentStreak <= -3) {
-    var cbdMsg = pickFromCategory(TOASTS_COMEBACKD, "comebackd", CAT_CD, cd);
+    var cbdMsg = pickFromCategory(TOASTS_COMEBACKD, "comebackd", CAT_CD, cd, getSideForRound(r));
     if (cbdMsg) { markCategoryShown("comebackd"); return { msg: cbdMsg, category: "comebackd" }; }
   }
 
   // OPPONENT COMEBACK (they closed a 4+ round gap recently)
   if (peakLead >= 4 && roundDiff <= 2 && currentStreak <= -2 && totalRounds >= 8) {
-    var comebackMsg = pickFromCategory(TOASTS_COMEBACK, "comeback", CAT_CD, cd);
+    var comebackMsg = pickFromCategory(TOASTS_COMEBACK, "comeback", CAT_CD, cd, getSideForRound(r));
     if (comebackMsg) { markCategoryShown("comeback"); return { msg: comebackMsg, category: "comeback" }; }
   }
 
   // WIN STREAK (3+ wins in a row)
   if (currentStreak >= 3 && r >= 4) {
     if (Math.random() < 0.60) {
-      var winStreakMsg = pickFromCategory(TOASTS_WIN_STREAK, "win_streak", CAT_CD, cd);
+      var winStreakMsg = pickFromCategory(TOASTS_WIN_STREAK, "win_streak", CAT_CD, cd, getSideForRound(r));
       if (winStreakMsg) { markCategoryShown("win_streak"); return { msg: winStreakMsg, category: "win_streak" }; }
     }
   }
@@ -1236,7 +1314,7 @@ function chooseRoundToast(roundNumber) {
   // LOSS STREAK (3+ losses in a row)
   if (currentStreak <= -3 && r >= 4) {
     if (Math.random() < 0.70) {
-      var lossStreakMsg = pickFromCategory(TOASTS_LOSS_STREAK, "loss_streak", CAT_CD, cd);
+      var lossStreakMsg = pickFromCategory(TOASTS_LOSS_STREAK, "loss_streak", CAT_CD, cd, getSideForRound(r));
       if (lossStreakMsg) { markCategoryShown("loss_streak"); return { msg: lossStreakMsg, category: "loss_streak" }; }
     }
   }
@@ -1244,7 +1322,7 @@ function chooseRoundToast(roundNumber) {
   // BIG LEAD (5+ round advantage)
   if (roundDiff >= 5 && totalRounds >= 7) {
     if (Math.random() < 0.40) {
-      var leadMsg = pickFromCategory(TOASTS_BIG_LEAD, "big_lead", CAT_CD, cd);
+      var leadMsg = pickFromCategory(TOASTS_BIG_LEAD, "big_lead", CAT_CD, cd, getSideForRound(r));
       if (leadMsg) { markCategoryShown("big_lead"); return { msg: leadMsg, category: "big_lead" }; }
     }
   }
@@ -1256,7 +1334,7 @@ function chooseRoundToast(roundNumber) {
       var agentSide = getSideForRound(r);
       var agentPool = (agentSide === "def") ? agentPools.def : agentPools.atk;
       var agentCatKey = "agent_" + localPlayerAgent.toLowerCase() + "_" + (agentSide === "def" ? "def" : "atk");
-      var agentMsg = pickFromCategory(agentPool, agentCatKey, CAT_CD, cd);
+      var agentMsg = pickFromCategory(agentPool, agentCatKey, CAT_CD, cd, agentSide);
       if (agentMsg) { markCategoryShown(agentCatKey); return { msg: agentMsg, category: "agent_" + localPlayerAgent.toLowerCase() }; }
     }
   }
@@ -1267,15 +1345,15 @@ function chooseRoundToast(roundNumber) {
     diagDebug("⚠️ SIDE UNKNOWN on round " + r + " (matchTeamSide=" + (matchTeamSide || "?") + ", localTeamId=" + (localTeamId === null ? "?" : localTeamId) + ", meTeam=" + (meTeam || "?") + ")");
   }
   if (side === "atk") {
-    var atkMsg = pickFromCategory(TOASTS_ATTACKER, "atk", CAT_CD, cd);
+    var atkMsg = pickFromCategory(TOASTS_ATTACKER, "atk", CAT_CD, cd, "atk");
     if (atkMsg) { markCategoryShown("atk"); return { msg: atkMsg, category: "attack" }; }
   } else if (side === "def") {
-    var defMsg = pickFromCategory(TOASTS_DEFENDER, "def", CAT_CD, cd);
+    var defMsg = pickFromCategory(TOASTS_DEFENDER, "def", CAT_CD, cd, "def");
     if (defMsg) { markCategoryShown("def"); return { msg: defMsg, category: "defense" }; }
   }
 
   // FINAL FALLBACK (side unknown or all categories on cooldown)
-  var fallbackMsg = pickRandomMessage(TOASTS_ATTACKER, cd);
+  var fallbackMsg = pickRandomMessage(TOASTS_ATTACKER, cd, { category: "atk", side: side, agent: localPlayerAgent || null });
   markCategoryShown("atk");
   return { msg: fallbackMsg, category: "attack" };
 }
