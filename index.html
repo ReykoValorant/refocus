@@ -215,7 +215,7 @@
       color: var(--text-primary);
     }
 
-.nav-btn {
+    .nav-btn {
       font-size: 13px;
       padding: 10px 20px;
     }
@@ -309,7 +309,7 @@
     .hero-heading {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: clamp(38px, 5vw, 58px);
+      font-size: clamp(32px, 4vw, 46px);
       line-height: 0.95;
       letter-spacing: -0.01em;
       text-transform: uppercase;
@@ -526,7 +526,7 @@
     .problem-stat-number {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: clamp(96px, 14vw, 160px);
+      font-size: clamp(32px, 4vw, 46px);
       line-height: 0.85;
       letter-spacing: -0.04em;
       background: linear-gradient(135deg, #ff4444 0%, #ff6b35 60%, #d4a052 100%);
@@ -538,7 +538,7 @@
     .problem-stat-label {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 700;
-      font-size: clamp(18px, 2.5vw, 28px);
+      font-size: clamp(14px, 1.5vw, 18px);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--text-primary);
@@ -572,7 +572,7 @@
     .solution-heading {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: clamp(36px, 5vw, 56px);
+      font-size: clamp(32px, 4vw, 46px);
       text-transform: uppercase;
       letter-spacing: 0.01em;
       line-height: 1;
@@ -658,11 +658,14 @@
       border-radius: var(--radius-sm);
       overflow: hidden;
       border: 1px solid var(--border);
+      background: var(--bg-secondary);
     }
 
     .card-mockup img {
       width: 100%;
-      height: auto;
+      height: 200px;
+      object-fit: contain;
+      object-position: center;
       display: block;
       opacity: 0.85;
       transition: var(--transition);
@@ -697,7 +700,7 @@
     .partners-heading {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: clamp(40px, 5.5vw, 64px);
+      font-size: clamp(32px, 4vw, 46px);
       text-transform: uppercase;
       line-height: 0.95;
       letter-spacing: -0.01em;
@@ -760,57 +763,6 @@
       color: var(--text-secondary);
       margin-top: 4px;
       letter-spacing: 0;
-    }
-
-    /* Notify form */
-    .notify-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 28px;
-      margin-top: 36px;
-    }
-
-    .notify-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .notify-form {
-      display: flex;
-      gap: 10px;
-    }
-
-    .notify-input {
-      flex: 1;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      font-family: 'Barlow', sans-serif;
-      font-size: 15px;
-      color: var(--text-primary);
-      outline: none;
-      transition: var(--transition);
-    }
-
-    .notify-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .notify-input:focus {
-      border-color: var(--border-gold);
-    }
-
-    .notify-submit {
-      font-size: 13px;
-      padding: 12px 22px;
     }
 
     /* Feature card on right for partners */
@@ -923,7 +875,7 @@
     .cta-heading {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: clamp(44px, 6vw, 72px);
+      font-size: clamp(32px, 4vw, 46px);
       text-transform: uppercase;
       line-height: 0.95;
       letter-spacing: -0.01em;
@@ -938,8 +890,8 @@
     }
 
     .cta-btn {
-      font-size: 18px;
-      padding: 20px 44px;
+      font-size: 14px;
+      padding: 14px 28px;
       border-radius: var(--radius-sm);
       box-shadow: 0 0 60px rgba(255, 68, 68, 0.4), 0 8px 32px rgba(255, 68, 68, 0.3);
     }
@@ -1048,8 +1000,22 @@
       }
     }
 
+    @media (max-width: 900px) {
+      .hero-inner {
+        gap: 40px;
+      }
+      .partners-inner {
+        gap: 48px;
+      }
+      #cta {
+        padding: 96px 0;
+      }
+    }
+
     @media (max-width: 768px) {
       section { padding: 72px 0; }
+      #problem { padding: 64px 0; }
+      #cta { padding: 88px 0; }
 
       .nav-link { display: none; }
 
@@ -1081,20 +1047,44 @@
         gap: 20px;
       }
 
+      .hero-stat-divider {
+        height: 20px;
+      }
+
       .footer-inner {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
+      }
+
+      .footer-links {
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .nav-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+      .nav-actions .btn-discord {
+        display: none;
       }
     }
 
     @media (max-width: 480px) {
       .container { padding: 0 16px; }
 
-      .hero-pill-text { font-size: 9px; }
+      .hero-pill-text { font-size: 10px; }
 
-      .notify-form {
+      .hero-stats {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .hero-stat-divider {
+        display: none;
       }
 
       .hero-actions {
@@ -1148,7 +1138,7 @@
           </h1>
 
           <p class="hero-sub">
-            Stop zoning out during the buy phase. Refocus delivers one precision macro coaching call — every round, based on your live match data.
+            Experience elite coaching without the clutter. Our overlay provides a single, powerful tactical tip during the buy phase, leaving you with a clear head and a winning plan.
           </p>
 
           <div class="hero-actions">
@@ -1216,7 +1206,7 @@
           <div class="problem-stat-label">Of deaths aren't mechanical</div>
         </div>
         <p class="problem-body">
-          They happen because players <strong>mentally check out during the buy phase</strong> — no plan, no coordination, no focus. By the time the round starts, it's already too late. You had the mechanics. You just didn't have the mindset.
+          You don't need better aim to climb, you need better decisions. While your enemies are mindlessly holding W. Refocus analyzes the match state to give you the tactical tips that mechanical skill can't provide.
         </p>
       </div>
     </div>
@@ -1227,8 +1217,8 @@
     <div class="container">
       <div class="solution-header">
         <span class="section-label">How It Works</span>
-        <h2 class="solution-heading">Built to Keep You<br><span class="gradient-text">In the Game.</span></h2>
-        <p class="solution-sub">Three things that make Refocus different from everything else you've tried.</p>
+        <h2 class="solution-heading">ENGINEERED FOR <br><span class="gradient-text">CONSISTENCY.</span></h2>
+        <p class="solution-sub">Built to eliminate autopilot and to help you dominate the lobby.</p>
       </div>
 
       <div class="cards-grid">
@@ -1240,12 +1230,12 @@
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <polyline points="9 12 11 14 15 10"/>
           </svg>
-          <h3 class="card-title">Runs as Overwolf.<br>Safe by Design.</h3>
+          <h3 class="card-title">Certified Safe.</h3>
           <p class="card-body">
             Refocus is a certified Overwolf app — never injected, never touching game memory, never flagged by Vanguard. Play without worrying about your account.
           </p>
           <div class="card-mockup">
-            <img src="ingamesettings.jpg" alt="In-Game Settings Panel">
+            <img src="overwolf.jpg" alt="In-Game Settings Panel">
           </div>
         </div>
 
@@ -1255,10 +1245,13 @@
           <svg class="card-icon card-icon-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          <h3 class="card-title">Reads Your Match,<br>In Real Time.</h3>
+          <h3 class="card-title">Live Match Intelligence.</h3>
           <p class="card-body">
-            Economy, win streaks, ult charge status, loadouts — Refocus reads live match data every buy phase so your coaching cue is always relevant to <em>this</em> round.
+            Refocus scans live match data to calculate the highest impact play for your specific situation.
           </p>
+          <div class="card-mockup">
+            <img src="data.jpg" alt="Live Match Data">
+          </div>
         </div>
 
         <!-- Card 3: One Call Per Round -->
@@ -1274,7 +1267,7 @@
           </svg>
           <h3 class="card-title">One Specific Plan.<br>Every Buy Phase.</h3>
           <p class="card-body">
-            No walls of text. No generic tips. Just one precise macro reminder displayed in-overlay so you always have a concrete game plan before the round clock hits zero.
+            No walls of text. No generic tips. Just one precise macro reminder displayed in-overlay so you always have a concrete game plan before the round starts.
           </p>
           <div class="card-mockup">
             <img src="tips.jpg" alt="In-Game Overlay Tip">
@@ -1297,7 +1290,7 @@
             Train with<br>the <span class="gradient-text">Pros.</span>
           </h2>
           <p class="partners-body">
-            We're partnering with Tier 1 coaches, retired professionals, and top content creators to build custom Coach Packs — curated mindsets and macro frameworks from the players who've won at the highest level.
+            We're partnering with pro coaches, players, and top content creators to build custom Coach Packs — curated mindsets and macro frameworks from the players who've won at the highest level.
           </p>
 
           <ul class="partners-features">
@@ -1306,8 +1299,8 @@
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
               </div>
               <div>
-                <span class="feature-text">Tier 1 Pro Coaching Frameworks</span>
-                <span class="feature-sub">Macro systems from the highest level of competitive play</span>
+                <span class="feature-text">Pro Coaches</span>
+                <span class="feature-sub">Tips from the highest level of coaches</span>
               </div>
             </li>
             <li class="feature-item">
@@ -1315,8 +1308,8 @@
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
               </div>
               <div>
-                <span class="feature-text">Retired Pro Player Strategies</span>
-                <span class="feature-sub">Decades of competitive experience distilled into actionable cues</span>
+                <span class="feature-text">Pro Players</span>
+                <span class="feature-sub">Pro player views of competitive experience</span>
               </div>
             </li>
             <li class="feature-item">
@@ -1324,8 +1317,8 @@
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
               </div>
               <div>
-                <span class="feature-text">Top Creator Coach Packs</span>
-                <span class="feature-sub">Community-favorite coaching styles, now in-overlay</span>
+                <span class="feature-text">Content Creator</span>
+                <span class="feature-sub">Coaching from your favourite content creator</span>
               </div>
             </li>
           </ul>
@@ -1336,7 +1329,7 @@
 
             <div class="partner-card">
               <div class="partner-card-icon fire">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
               </div>
               <div>
                 <div class="partner-card-title">Tier 1 Coaches</div>
@@ -1350,8 +1343,8 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
               </div>
               <div>
-                <div class="partner-card-title">Retired Pros</div>
-                <div class="partner-card-sub">Real comp experience, inside your overlay</div>
+                <div class="partner-card-title">Pro players</div>
+                <div class="partner-card-sub">Real pro experience, inside your overlay</div>
               </div>
               <span class="partner-badge">Coming Soon</span>
             </div>
@@ -1362,20 +1355,13 @@
               </div>
               <div>
                 <div class="partner-card-title">Content Creators</div>
-                <div class="partner-card-sub">Your favorite coach's style, live in-game</div>
+                <div class="partner-card-sub">Your favorite streamer style, live in-game</div>
               </div>
               <span class="partner-badge">Coming Soon</span>
             </div>
 
           </div>
 
-          <div class="notify-box">
-            <span class="notify-label">Get notified when Coach Packs launch</span>
-            <div class="notify-form">
-              <input type="email" class="notify-input" placeholder="your@email.com" autocomplete="off">
-              <button type="button" class="btn btn-primary notify-submit">Notify Me</button>
-            </div>
-          </div>
         </div>
 
       </div>
@@ -1394,7 +1380,7 @@
         </h2>
         <p class="cta-sub">Download Refocus free on the Overwolf App Store and start playing with a plan.</p>
         <a href="https://www.overwolf.com/app/refocus" class="btn btn-primary cta-btn" target="_blank" rel="noopener">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download on Overwolf — It's Free
         </a>
         <p class="cta-fine">No account required &nbsp;·&nbsp; Vanguard safe &nbsp;·&nbsp; Certified Overwolf app</p>
@@ -1415,8 +1401,6 @@
         <p class="footer-copy">© 2025 Refocus. Built for competitors.</p>
 
         <div class="footer-links">
-          <a href="#" class="footer-link">Privacy</a>
-          <a href="#" class="footer-link">Terms</a>
           <a href="https://discord.gg/zeZef2rAJW" class="footer-link" target="_blank" rel="noopener">Discord</a>
           <a href="https://www.overwolf.com/app/refocus" class="footer-link" target="_blank" rel="noopener">Overwolf Store</a>
         </div>
