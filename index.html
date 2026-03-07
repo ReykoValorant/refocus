@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refocus — Your Radiant Coach, Live In-Game</title>
+  <meta name="description" content="Refocus delivers one precise macro coaching cue every buy phase — a Vanguard-safe Overwolf overlay powered by live match data.">
+  <link rel="icon" href="icon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary:    #08090c;
+      --bg-secondary:  #0d1117;
+      --bg-card:       #111820;
+      --bg-card-alt:   #0f141c;
+      --accent-fire:   #ff4444;
+      --accent-orange: #ff6b35;
+      --accent-gold:   #d4a052;
+      --accent-cyan:   #4ecdc4;
+      --text-primary:  #ffffff;
+      --text-secondary:#8b9ab0;
+      --text-muted:    #4a5568;
+      --border:        rgba(255, 255, 255, 0.07);
+      --border-gold:   rgba(212, 160, 82, 0.3);
+      --glow-red:      rgba(255, 68, 68, 0.25);
+      --glow-orange:   rgba(255, 107, 53, 0.20);
+      --glow-gold:     rgba(212, 160, 82, 0.15);
+      --radius-sm:     6px;
+      --radius-md:     12px;
+      --radius-lg:     20px;
+      --transition:    all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      --max-width:     1200px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Barlow', system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Utility ───────────────────────────────────────────────────── */
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ff4444 0%, #ff6b35 45%, #d4a052 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 2px;
+      background: var(--accent-gold);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-fire) 0%, var(--accent-orange) 100%);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(255, 68, 68, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 40px rgba(255, 68, 68, 0.5);
+      filter: brightness(1.08);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-gold);
+      color: var(--text-primary);
+      background: rgba(212, 160, 82, 0.06);
+    }
+
+    /* ─── Nav ───────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(8, 9, 12, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo {
+      height: 36px;
+      width: auto;
+    }
+
+    .nav-wordmark {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-link {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-btn {
+      font-size: 13px;
+      padding: 10px 20px;
+    }
+
+    /* ─── Hero ──────────────────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 65%;
+      height: 100%;
+      background: radial-gradient(ellipse 70% 70% at 70% 40%, rgba(255, 68, 68, 0.09) 0%, rgba(255, 107, 53, 0.05) 40%, transparent 70%);
+    }
+
+    .hero-glow-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(to top, var(--bg-primary), transparent);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212, 160, 82, 0.08);
+      border: 1px solid rgba(212, 160, 82, 0.22);
+      border-radius: 40px;
+      padding: 5px 14px 5px 8px;
+      margin-bottom: 24px;
+    }
+
+    .hero-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 6px var(--accent-cyan);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero-pill-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+    }
+
+    .hero-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(52px, 6.5vw, 82px);
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .hero-sub {
+      font-family: 'Barlow', sans-serif;
+      font-weight: 400;
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 480px;
+      margin-bottom: 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .hero-btn-primary {
+      font-size: 16px;
+      padding: 16px 32px;
+    }
+
+    .hero-scroll-link {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+
+    .hero-scroll-link:hover {
+      color: var(--accent-gold);
+    }
+
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hero-stat-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .hero-stat-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-stat-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+    }
+
+    /* Hero mockup */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .hero-mockup-wrap {
+      position: relative;
+      border-radius: var(--radius-md);
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(212,160,82,0.4) 0%, rgba(255,68,68,0.2) 50%, rgba(212,160,82,0.1) 100%);
+      box-shadow: 0 0 60px rgba(212, 160, 82, 0.15), 0 0 120px rgba(255, 68, 68, 0.08);
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .hero-mockup-inner {
+      background: var(--bg-card);
+      border-radius: calc(var(--radius-md) - 2px);
+      overflow: hidden;
+    }
+
+    .hero-mockup-bar {
+      background: rgba(0,0,0,0.6);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .mockup-dot:nth-child(1) { background: #ff5f57; }
+    .mockup-dot:nth-child(2) { background: #febc2e; }
+    .mockup-dot:nth-child(3) { background: #28c840; }
+
+    .mockup-bar-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-mockup-img {
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      display: block;
+    }
+
+    .hero-mockup-glow {
+      position: absolute;
+      inset: -30px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,68,68,0.08) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ─── Section Shared ────────────────────────────────────────────── */
+    section {
+      padding: 100px 0;
+    }
+
+    /* ─── Problem ───────────────────────────────────────────────────── */
+    #problem {
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      padding: 80px 0;
+    }
+
+    #problem::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,68,68,0.3), transparent);
+    }
+
+    #problem::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,68,68,0.3), transparent);
+    }
+
+    .problem-bg-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(255,68,68,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .problem-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .problem-stat-block {
+      margin: 28px 0 40px;
+    }
+
+    .problem-stat-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(96px, 14vw, 160px);
+      line-height: 0.85;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #ff4444 0%, #ff6b35 60%, #d4a052 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .problem-stat-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: clamp(18px, 2.5vw, 28px);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-top: 8px;
+    }
+
+    .problem-body {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .problem-body strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ─── Solution ──────────────────────────────────────────────────── */
+    #solution {
+      background: var(--bg-secondary);
+      position: relative;
+    }
+
+    .solution-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .solution-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(36px, 5vw, 56px);
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      margin-top: 16px;
+    }
+
+    .solution-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-top: 16px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,160,82,0.1);
+    }
+
+    .card-accent-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .card-cyan .card-accent-line  { background: linear-gradient(90deg, var(--accent-cyan), transparent); }
+    .card-orange .card-accent-line { background: linear-gradient(90deg, var(--accent-orange), transparent); }
+    .card-fire .card-accent-line  { background: linear-gradient(90deg, var(--accent-fire), transparent); }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .card-icon-cyan  { color: var(--accent-cyan); }
+    .card-icon-orange { color: var(--accent-orange); }
+    .card-icon-fire  { color: var(--accent-fire); }
+
+    .card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .card-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    .card-mockup {
+      margin-top: 28px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .card-mockup img {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0.85;
+      transition: var(--transition);
+    }
+
+    .card:hover .card-mockup img {
+      opacity: 1;
+    }
+
+    /* ─── Partners ──────────────────────────────────────────────────── */
+    #partners {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .partners-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, rgba(212,160,82,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .partners-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .partners-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(40px, 5.5vw, 64px);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      margin: 16px 0 20px;
+    }
+
+    .partners-body {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 440px;
+    }
+
+    .partners-features {
+      list-style: none;
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .feature-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(212,160,82,0.12);
+      border: 1px solid rgba(212,160,82,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .feature-check svg {
+      width: 12px;
+      height: 12px;
+      color: var(--accent-gold);
+    }
+
+    .feature-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    .feature-sub {
+      display: block;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      letter-spacing: 0;
+    }
+
+    /* Notify form */
+    .notify-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      margin-top: 36px;
+    }
+
+    .notify-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .notify-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .notify-input {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+      color: var(--text-primary);
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .notify-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .notify-input:focus {
+      border-color: var(--border-gold);
+    }
+
+    .notify-submit {
+      font-size: 13px;
+      padding: 12px 22px;
+    }
+
+    /* Feature card on right for partners */
+    .partners-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .partner-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: var(--transition);
+    }
+
+    .partner-card:hover {
+      border-color: var(--border-gold);
+      transform: translateX(4px);
+    }
+
+    .partner-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .partner-card-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .partner-card-icon.fire   { background: rgba(255,68,68,0.12);  color: var(--accent-fire); }
+    .partner-card-icon.orange { background: rgba(255,107,53,0.12); color: var(--accent-orange); }
+    .partner-card-icon.gold   { background: rgba(212,160,82,0.12); color: var(--accent-gold); }
+
+    .partner-card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text-primary);
+    }
+
+    .partner-card-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .partner-badge {
+      margin-left: auto;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 40px;
+      background: rgba(212,160,82,0.1);
+      border: 1px solid rgba(212,160,82,0.2);
+      color: var(--accent-gold);
+      flex-shrink: 0;
+    }
+
+    /* ─── CTA ───────────────────────────────────────────────────────── */
+    #cta {
+      position: relative;
+      text-align: center;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      padding: 120px 0;
+    }
+
+    #cta::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212,160,82,0.3), transparent);
+    }
+
+    .cta-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(255,68,68,0.1) 0%, rgba(255,107,53,0.05) 40%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .cta-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(44px, 6vw, 72px);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      margin: 16px 0 20px;
+    }
+
+    .cta-sub {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .cta-btn {
+      font-size: 18px;
+      padding: 20px 44px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 0 60px rgba(255, 68, 68, 0.4), 0 8px 32px rgba(255, 68, 68, 0.3);
+    }
+
+    .cta-btn:hover {
+      box-shadow: 0 0 80px rgba(255, 68, 68, 0.55), 0 12px 48px rgba(255, 68, 68, 0.4);
+    }
+
+    .cta-fine {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ─── Footer ────────────────────────────────────────────────────── */
+    footer {
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .footer-logo {
+      height: 28px;
+      width: auto;
+      opacity: 0.75;
+    }
+
+    .footer-wordmark {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .footer-link {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .footer-link:hover {
+      color: var(--text-secondary);
+    }
+
+    .footer-overwolf {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .overwolf-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+    }
+
+    /* ─── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .cards-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .cards-grid .card:last-child {
+        grid-column: 1 / -1;
+        max-width: 520px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      section { padding: 72px 0; }
+
+      .nav-link { display: none; }
+
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .hero-visual { order: -1; }
+
+      .hero-mockup-img {
+        max-width: 100%;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards-grid .card:last-child {
+        max-width: 100%;
+      }
+
+      .partners-inner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .hero-stats {
+        gap: 20px;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 0 16px; }
+
+      .hero-pill-text { font-size: 9px; }
+
+      .notify-form {
+        flex-direction: column;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Navigation ──────────────────────────────────────────────── -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <img src="logo.png" alt="Refocus Logo" class="nav-logo">
+        <span class="nav-wordmark">REFOCUS</span>
+      </a>
+      <div class="nav-actions">
+        <a href="#solution" class="nav-link">How It Works</a>
+        <a href="#partners" class="nav-link">Coach Packs</a>
+        <a href="https://www.overwolf.com/app/refocus" class="btn btn-primary nav-btn" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ────────────────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-bg">
+      <div class="hero-glow-bottom"></div>
+    </div>
+    <div class="container">
+      <div class="hero-inner">
+
+        <div class="hero-content">
+          <div class="hero-pill">
+            <div class="hero-pill-dot"></div>
+            <span class="hero-pill-text">Vanguard Safe &nbsp;·&nbsp; Powered by Overwolf</span>
+          </div>
+
+          <h1 class="hero-heading">
+            Your Radiant Coach,<br>
+            <span class="gradient-text">Live In-Game.</span>
+          </h1>
+
+          <p class="hero-sub">
+            Stop zoning out during the buy phase. Refocus delivers one precision macro coaching call — every round, based on your live match data.
+          </p>
+
+          <div class="hero-actions">
+            <a href="https://www.overwolf.com/app/refocus" class="btn btn-primary hero-btn-primary" target="_blank" rel="noopener">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download on Overwolf
+            </a>
+            <a href="#solution" class="hero-scroll-link">
+              See how it works
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hero-stat-value gradient-text">Free</span>
+              <span class="hero-stat-label">On Overwolf</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value">v0.4.0</span>
+              <span class="hero-stat-label">Latest Build</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" style="color:var(--accent-cyan)">Safe</span>
+              <span class="hero-stat-label">Vanguard &amp; TOS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-mockup-wrap">
+            <div class="hero-mockup-inner">
+              <div class="hero-mockup-bar">
+                <div class="mockup-dots">
+                  <div class="mockup-dot"></div>
+                  <div class="mockup-dot"></div>
+                  <div class="mockup-dot"></div>
+                </div>
+                <span class="mockup-bar-title">REFOCUS — DASHBOARD</span>
+              </div>
+              <img src="launcher.jpg" alt="Refocus Dashboard" class="hero-mockup-img">
+            </div>
+          </div>
+          <div class="hero-mockup-glow"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Problem ─────────────────────────────────────────────────── -->
+  <section id="problem">
+    <div class="problem-bg-glow"></div>
+    <div class="container">
+      <div class="problem-inner">
+        <span class="section-label">The Problem</span>
+        <div class="problem-stat-block">
+          <div class="problem-stat-number">50%</div>
+          <div class="problem-stat-label">Of deaths aren't mechanical</div>
+        </div>
+        <p class="problem-body">
+          They happen because players <strong>mentally check out during the buy phase</strong> — no plan, no coordination, no focus. By the time the round starts, it's already too late. You had the mechanics. You just didn't have the mindset.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Solution ────────────────────────────────────────────────── -->
+  <section id="solution">
+    <div class="container">
+      <div class="solution-header">
+        <span class="section-label">How It Works</span>
+        <h2 class="solution-heading">Built to Keep You<br><span class="gradient-text">In the Game.</span></h2>
+        <p class="solution-sub">Three things that make Refocus different from everything else you've tried.</p>
+      </div>
+
+      <div class="cards-grid">
+
+        <!-- Card 1: Vanguard Safe -->
+        <div class="card card-cyan">
+          <div class="card-accent-line"></div>
+          <svg class="card-icon card-icon-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+          <h3 class="card-title">Runs as Overwolf.<br>Safe by Design.</h3>
+          <p class="card-body">
+            Refocus is a certified Overwolf app — never injected, never touching game memory, never flagged by Vanguard. Play without worrying about your account.
+          </p>
+          <div class="card-mockup">
+            <img src="ingamesettings.jpg" alt="In-Game Settings Panel">
+          </div>
+        </div>
+
+        <!-- Card 2: Live Match Data -->
+        <div class="card card-orange">
+          <div class="card-accent-line"></div>
+          <svg class="card-icon card-icon-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <h3 class="card-title">Reads Your Match,<br>In Real Time.</h3>
+          <p class="card-body">
+            Economy, win streaks, ult charge status, loadouts — Refocus reads live match data every buy phase so your coaching cue is always relevant to <em>this</em> round.
+          </p>
+        </div>
+
+        <!-- Card 3: One Call Per Round -->
+        <div class="card card-fire">
+          <div class="card-accent-line"></div>
+          <svg class="card-icon card-icon-fire" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+          </svg>
+          <h3 class="card-title">One Specific Plan.<br>Every Buy Phase.</h3>
+          <p class="card-body">
+            No walls of text. No generic tips. Just one precise macro reminder displayed in-overlay so you always have a concrete game plan before the round clock hits zero.
+          </p>
+          <div class="card-mockup">
+            <img src="tips.jpg" alt="In-Game Overlay Tip">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Partners / Social Proof ─────────────────────────────────── -->
+  <section id="partners">
+    <div class="partners-bg"></div>
+    <div class="container">
+      <div class="partners-inner">
+
+        <div class="partners-left">
+          <span class="section-label">Coach Packs</span>
+          <h2 class="partners-heading">
+            Train with<br>the <span class="gradient-text">Pros.</span>
+          </h2>
+          <p class="partners-body">
+            We're partnering with Tier 1 coaches, retired professionals, and top content creators to build custom Coach Packs — curated mindsets and macro frameworks from the players who've won at the highest level.
+          </p>
+
+          <ul class="partners-features">
+            <li class="feature-item">
+              <div class="feature-check">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+              </div>
+              <div>
+                <span class="feature-text">Tier 1 Pro Coaching Frameworks</span>
+                <span class="feature-sub">Macro systems from the highest level of competitive play</span>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-check">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+              </div>
+              <div>
+                <span class="feature-text">Retired Pro Player Strategies</span>
+                <span class="feature-sub">Decades of competitive experience distilled into actionable cues</span>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-check">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+              </div>
+              <div>
+                <span class="feature-text">Top Creator Coach Packs</span>
+                <span class="feature-sub">Community-favorite coaching styles, now in-overlay</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="partners-right">
+          <div class="partners-cards">
+
+            <div class="partner-card">
+              <div class="partner-card-icon fire">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+              </div>
+              <div>
+                <div class="partner-card-title">Tier 1 Coaches</div>
+                <div class="partner-card-sub">Partnering with top competitive coaches</div>
+              </div>
+              <span class="partner-badge">Coming Soon</span>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-card-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+              </div>
+              <div>
+                <div class="partner-card-title">Retired Pros</div>
+                <div class="partner-card-sub">Real comp experience, inside your overlay</div>
+              </div>
+              <span class="partner-badge">Coming Soon</span>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-card-icon gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              </div>
+              <div>
+                <div class="partner-card-title">Content Creators</div>
+                <div class="partner-card-sub">Your favorite coach's style, live in-game</div>
+              </div>
+              <span class="partner-badge">Coming Soon</span>
+            </div>
+
+          </div>
+
+          <div class="notify-box">
+            <span class="notify-label">Get notified when Coach Packs launch</span>
+            <div class="notify-form">
+              <input type="email" class="notify-input" placeholder="your@email.com" autocomplete="off">
+              <button type="button" class="btn btn-primary notify-submit">Notify Me</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Final CTA ────────────────────────────────────────────────── -->
+  <section id="cta">
+    <div class="cta-glow"></div>
+    <div class="container">
+      <div class="cta-inner">
+        <span class="section-label" style="justify-content:center">Ready to Level Up?</span>
+        <h2 class="cta-heading">
+          Stop Guessing.<br>
+          <span class="gradient-text">Start Refocusing.</span>
+        </h2>
+        <p class="cta-sub">Download Refocus free on the Overwolf App Store and start playing with a plan.</p>
+        <a href="https://www.overwolf.com/app/refocus" class="btn btn-primary cta-btn" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download on Overwolf — It's Free
+        </a>
+        <p class="cta-fine">No account required &nbsp;·&nbsp; Vanguard safe &nbsp;·&nbsp; Certified Overwolf app</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ───────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+
+        <a href="#" class="footer-brand">
+          <img src="logo.png" alt="Refocus" class="footer-logo">
+          <span class="footer-wordmark">REFOCUS</span>
+        </a>
+
+        <p class="footer-copy">© 2025 Refocus. Built for competitors.</p>
+
+        <div class="footer-links">
+          <a href="#" class="footer-link">Privacy</a>
+          <a href="#" class="footer-link">Terms</a>
+          <a href="https://www.overwolf.com/app/refocus" class="footer-link" target="_blank" rel="noopener">Overwolf Store</a>
+        </div>
+
+        <div class="footer-overwolf">
+          <div class="overwolf-badge-dot"></div>
+          Powered by Overwolf
+        </div>
+
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
